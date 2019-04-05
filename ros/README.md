@@ -2,7 +2,7 @@
 
 #### ronin_msgs
  
-  Mensajes específicos de la plataforma.
+Mensajes específicos de la plataforma.
   
 
 
