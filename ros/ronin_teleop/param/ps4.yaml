@@ -1,0 +1,11 @@
+# PS4 Joy params
+
+axis_linear_vel: 1
+axis_angular_vel: 0
+axis_cam_pitch: 5
+axis_cam_yaw: 2
+axis_deadzone: 0.15
+axis_pad_UD: 7
+axis_pad_RL: 6
+
+button_center_cam: 1
