@@ -1,0 +1,104 @@
+    ##################################
+    # RPLIDAR A1 gmapping PARAMETERS #
+    ##################################
+    
+    # frame attached to the mobile base (default: "base_link") 
+    base_frame: base_footprint
+    
+    # frame attached to the odometry system (default: "odom")
+    odom_frame: odom
+    
+    # frame attached to the map (default: "map") 
+    map_frame: map
+    
+    # sets the time (in sec) to wait until update the map (default: 5.0)
+    # Lowering this number updates the occupancy grid more often, at the expense of greater computational load.
+    map_update_interval: 5.0
+    
+    # sets the maximun usable range of the laser. The laser beams will be cropped to this value (default: 80.0)
+    maxUrange: 5.5
+    
+    # sets the maximum range of the laser. Set this value to something slightly higher than the real sensor's max range 
+    maxRange: 5.5
+    
+    # The sigma used by the greedy endpoint matching
+    sigma: 0.05
+    
+    # The kernel in which to look for a correspondence
+    kernelSize: 1
+    
+    # The optimization step in translation and in rotation
+    lstep: 0.05
+    astep: 0.05
+    
+    # The number of iterations of the scanmatcher
+    iterations: 5
+    
+    # The sigma of a beam used for likelihood computation
+    lsigma: 0.075
+    
+    # Gain to be used while evaluating the likelihood, for smoothing the resampling effects
+    ogain: 3.0
+    
+    # Number of beams to skip in each scan
+    lskip: 0
+    
+    # sets the minimum score to consider a laser reading good (default: 0.0)
+    # Can avoid jumping pose estimates in large open spaces when using laser scanners with limited range (e.g. 5m)
+    # Scores go up to 600+, try 50 for example when experiencing jumping estimate issues
+    minimumScore: 50
+    
+    # Odometry error:
+    # - in translation as a function of translation (rho/rho)
+    # - in translation as a function of rotation (rho/theta)
+    # - in rotation as a function of translation (theta/rho)
+    # - in rotation as a function of rotation (theta/theta)
+    srr: 0.01
+    srt: 0.02
+    str: 0.01
+    stt: 0.02
+    
+    # sets the linear distance that the robot has to move in order to process a laser reading (default: 1.0) 
+    # linearUpdate: 0.5 
+    linearUpdate: 0.2
+    
+    # sets the angular distance that the robot has to move in order to process a laser reading (default: 0.5) 
+    angularUpdate: 0.25
+    
+    # sets the time (in sec.) to wait between laser readings. A value os -1 turns off this function (default: -1.0) 
+    # temporalUpdate: 5.0 (Geduino)
+    temporalUpdate: -1.0
+    
+    # The Neff based resampling threshold
+    resampleThreshold: 0.5
+    
+    # sets the number of particles in the filter (default: 30) 
+    # particles: 80 
+    particles: 30
+    
+    # initial map dimesions (default: +-100.0) 
+    xmin: -10.0
+    ymin: -10.0
+    xmax: 10.0
+    ymax: 10.0
+    
+    # make the starting size small for the benefit of the Android client's memory...
+    # xmin: -1.0
+    # ymin: -1.0
+    # xmax: 1.0
+    # ymax: 1.0
+    
+    # sets the resolution of the map (default: 0.05) 
+    delta: 0.025
+    
+    # Translational sampling range for the likelihood
+    llsamplerange: 0.01
+    
+    # Translational sampling step for the likelihood
+    llsamplestep: 0.01
+    
+    # Angular sampling range for the likelihood
+    lasamplerange: 0.005
+    
+    # Angular sampling step for the likelihood
+    lasamplestep: 0.005
