@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <node name="ronin_camera_node" pkg="ronin_camera" type="ronin_camera_node.py">
+    <rosparam command="load" file="$(find ronin_camera)/param/camera.yaml" />    
+  </node>
+</launch>

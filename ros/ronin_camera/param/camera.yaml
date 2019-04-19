@@ -1,0 +1,18 @@
+#------------------------------------------------
+# RONIN CAMERA params
+
+#------------------------------------------------
+# Pitch servo params
+
+pitch_servo_pin: 24
+pitch_servo_max: 2400
+pitch_servo_min: 1700
+pitch_servo_center: 2000
+
+#------------------------------------------------
+# Yaw servo params
+
+yaw_servo_pin: 23
+yaw_servo_max: 1860
+yaw_servo_min: 1260
+yaw_servo_center: 1560
