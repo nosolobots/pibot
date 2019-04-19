@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+
+  <!-- base controller node -->
+  <include file="$(find ronin_base)/launch/ronin_base.launch"/>
+  
+  <!-- camera node -->
+  <include file="$(find ronin_camera)/launch/ronin_camera_node.launch"/>  
+  
+  <!-- robot model -->
+  <include file="$(find ronin_description)/launch/ronin.launch"/>  
+  
+  <!-- RPLIDAR node -->
+  <include file="$(find rplidar_ros)/launch/rplidar.launch"/>
+  
+</launch>
