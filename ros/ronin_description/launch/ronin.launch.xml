@@ -1,0 +1,22 @@
+<?xml version='1.0'?>
+
+<launch>
+  
+  <arg name="x" default="0.0" />
+  <arg name="y" default="0.0" />
+  <arg name="z" default="0.1" />  
+  
+  
+  <!-- URDF and TF support -->
+  <param name="robot_description" command="$(find xacro)/xacro.py $(find ronin_description)/urdf/ronin_gazebo.xacro" />
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher"/>    
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" >
+    <param name="publish_frequency" value="50.0"/>
+  </node>
+
+  <!-- Put a robot in gazebo, make it look pretty -->
+  <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen"
+        args="-urdf -x $(arg x) -y $(arg y) -z $(arg z) -model ronin -param robot_description"/>
+
+
+</launch>

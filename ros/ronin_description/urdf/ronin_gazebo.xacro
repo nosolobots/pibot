@@ -1,0 +1,558 @@
+<?xml version='1.0'?>
+
+<robot name="ronin">
+  <!--
+  ========== PROPERTIES ===========
+  -->    
+
+  <!--All units in m-kg-s-radians unit system -->
+  
+  <property name="base_height" value="0.004" /> 
+  <property name="base_radius" value="0.1" /> 
+  <property name="base_mass" value="2.0" /> 
+  
+  <property name="wheel_radius" value="0.0325" /> 
+  <property name="wheel_height" value="0.015" />
+  <property name="wheel_mass" value="1" />
+
+  <property name="caster_radius" value="${wheel_radius/2 + 0.00001}" /> 
+  <property name="caster_mass" value="0.1" />
+  
+  <property name="tray_1_height" value="0.06" /> 
+  <property name="tray_bar_radius" value="0.0025" /> 
+  
+  <property name="M_PI" value="3.1415926535897931" />
+  <property name="M_PI_2" value="1.570796327" />
+  <property name="DEG_TO_RAD" value="0.017453293" />    
+  
+  <property name="rplidar_a1m8_height" value="0.025" /> 
+  <property name="rplidar_a1m8_radius" value="0.035" /> 
+  
+  <!--
+  ========== MATERIALS ===========
+  -->
+  <material name="Black">
+    <color rgba="0.0 0.0 0.0 1.0"/>
+  </material>
+
+  <material name="Red">
+    <color rgba="0.8 0.0 0.0 1.0"/>
+  </material>
+
+  <material name="White">
+    <color rgba="1.0 1.0 1.0 1.0"/>
+  </material>
+
+  <material name="Blue">
+    <color rgba="0.0 0.0 0.8 1.0"/>
+  </material>  
+
+  <material name="Green">
+    <color rgba="0.0 0.8 0.0 1.0"/>
+  </material>    
+  
+  <material name="Orange">
+    <color rgba="0.8 0.5 0.1 1.0"/>
+  </material>      
+  
+  <material name="Gray">
+    <color rgba="0.65 0.65 0.65 1.0"/>
+  </material>        
+  
+  <!--
+  ========== MACROS ===========
+  -->  
+  <!-- ::::::::::::::::::::::::::::::::::::::::: -->
+  <!-- Macro for calculating inertia of cylinder -->
+  <macro name="cylinder_inertia" params="m r h">
+    <inertia  ixx="${m*(3*r*r+h*h)/12}" ixy = "0" ixz = "0"
+              iyy="${m*(3*r*r+h*h)/12}" iyz = "0"
+              izz="${m*r*r/2}" /> 
+  </macro>  
+
+  <!-- ::::::::::::::::::::::::::::::::::::::::: -->
+  <!-- Macro for calculating inertia of sphere -->
+  <macro name="sphere_inertia" params="m r">
+    <inertia  ixx="${2*m*r*r/5}" ixy = "0" ixz = "0"
+              iyy="${2*m*r*r/5}" iyz = "0"
+              izz="${2*m*r*r/5}" /> 
+  </macro>    
+  
+  <!-- ::::::::::::::::::::::::::::::::::::::::: -->  
+  <!-- Macro for TRANSMISSION WHEELS -->
+  <macro name="wheel" params="fb lr parent translateX translateY translateZ flipY">
+    <link name="${fb}_${lr}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${flipY*M_PI/2} 0  0" /> 
+        <geometry>
+          <cylinder length="${wheel_height}" radius="${wheel_radius}" />
+        </geometry>
+        <material name="Gray" />
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${flipY*M_PI/2} 0 0" />
+        <geometry>
+          <cylinder length="${wheel_height}" radius="${wheel_radius}" />
+        </geometry>
+      </collision>
+      <inertial>
+        <mass value="${wheel_mass}" />
+        <origin xyz="0 0 0" />
+        <cylinder_inertia  m="${wheel_mass}" r="${wheel_radius}" h="${wheel_height}" />
+      </inertial>
+    </link>
+
+    <gazebo reference="${fb}_${lr}_wheel_link">
+      <mu1 value="1.0"/>
+      <mu2 value="1.0"/>
+      <kp  value="10000000.0" />
+      <kd  value="1.0" />
+      <fdir1 value="1 0 0"/>
+      <material>Gazebo/Grey</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="${fb}_${lr}_wheel_joint" type="continuous">
+      <parent link="${parent}"/>
+      <child link="${fb}_${lr}_wheel_link"/>
+      <origin xyz="${translateX} ${translateY} ${translateZ}" rpy="0 0 0" /> 
+      <axis xyz="0 1 0" rpy="0 0 0" />
+      <limit effort="100" velocity="100"/>
+      <joint_properties damping="0.0" friction="0.0"/>
+    </joint>
+
+    <!-- Transmission is important to link the joints and the controller -->
+    <transmission name="${fb}_${lr}_wheel_joint_trans">
+      <type>transmission_interface/SimpleTransmission</type>
+      <joint name="${fb}_${lr}_wheel_joint" />
+      <actuator name="${fb}_${lr}_wheel_joint_motor">
+        <hardwareInterface>EffortJointInterface</hardwareInterface>
+        <mechanicalReduction>1</mechanicalReduction>
+      </actuator>
+    </transmission>
+  </macro>  
+
+  <!-- ::::::::::::::::::::::::::::::::::::::::: -->  
+  <!-- Macro for CASTER WHEELS -->  
+  <macro name="caster" params="fb parent translateX translateY translateZ">
+    <link name="${fb}_caster_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <sphere radius="${caster_radius}" />
+	</geometry>  
+	<material name="White"/>
+      </visual>  
+      <collision>
+	<origin xyz="0 0 0" rpy="0 0 0" /> 
+	<geometry>
+	  <sphere radius="${caster_radius}" />
+	</geometry>
+      </collision>    
+      <inertial>
+	<mass value="${caster_mass}" />
+	<origin xyz="0 0 0" rpy="0 0 0" />        
+	<!--
+	<sphere_inertia  m="${caster_mass}" r="${caster_radius}" />
+	-->
+	<inertia ixx="0.001" ixy="0.0" ixz="0.0"
+		iyy="0.001" iyz="0.0" 
+		izz="0.001" />	
+      </inertial>
+    </link>
+
+    <gazebo reference="${fb}_caster_link">
+      <material>Gazebo/White</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="${fb}_caster_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="${fb}_caster_link"/>
+      <origin xyz="${translateX} ${translateY} ${translateZ}" rpy="0 0 0"/>
+    </joint>    
+    
+    <!-- Caster Base -->
+    <link name="${fb}_caster_base_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <cylinder length="${caster_radius}" radius="${caster_radius}" />
+	</geometry>  
+	<material name="Blue"/>
+      </visual>  
+      <collision>
+	<origin xyz="0 0 0" rpy="0 0 0" /> 
+	<geometry>
+	  <cylinder length="${caster_radius}" radius="${caster_radius}" />
+	</geometry>
+      </collision>    
+      <inertial>
+	<mass value="${caster_mass}" />
+	<origin xyz="0 0 0" rpy="0 0 0" />        
+	<cylinder_inertia  m="${caster_mass}" r="${caster_radius}" h="${caster_radius}" />
+      </inertial>
+    </link>
+
+    <gazebo reference="${fb}_caster_base_link">
+      <material>Gazebo/Blue</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="${fb}_caster_base_joint" type="fixed">
+      <parent link="${fb}_caster_link"/>
+      <child link="${fb}_caster_base_link"/>
+      <origin xyz="0 0 ${caster_radius/2}" rpy="0 0 0"/>
+    </joint>        
+  </macro>    
+  
+  <!-- ::::::::::::::::::::::::::::::::::::::::: -->  
+  <!-- Macro for TRAYS -->  
+  <macro name="tray" params="id parent translateZ">
+    <link name="tray_${id}_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <cylinder length="0.01" radius="${base_radius}" /> <!-- 1cm thick -->
+	</geometry>  
+	<material name="Blue"/>
+      </visual>  
+
+      <collision>
+	<origin xyz="0 0 0" rpy="0 0 0" /> 
+	<geometry>
+	  <cylinder length="0.01" radius="${base_radius}" />
+	</geometry>
+      </collision>    
+      <inertial>
+	<mass value="0.1" />
+	<origin xyz="0 0 0" rpy="0 0 0" />        
+	<cylinder_inertia  m="0.1" r="${base_radius}" h="0.01" />
+      </inertial>
+    </link>  
+
+    <gazebo reference="tray_${id}_link">
+      <material>Gazebo/Blue</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="tray_${id}_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="tray_${id}_link"/>
+      <origin xyz="0 0 ${translateZ}" rpy="0 0 0"/>
+    </joint>      
+
+    <!-- Tray Base -->
+    <!--
+    <link name="tray_${id}_base_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <cylinder length="${translateZ}" radius="0.005" />
+	</geometry>  
+	<material name="White"/>
+      </visual>  
+      <collision>
+	<origin xyz="0 0 0" rpy="0 0 0" /> 
+	<geometry>
+	  <cylinder length="${translateZ}" radius="0.005" />
+	</geometry>
+      </collision>    
+      <inertial>
+	<mass value="0.1" />
+	<origin xyz="0 0 0" rpy="0 0 0" />        
+	<cylinder_inertia  m="0.05" r="0.005" h="${translateZ}" />
+      </inertial>
+    </link>  
+   
+    <gazebo reference="tray_${id}_base_link">
+      <material>Gazebo/White</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="tray_${id}_base_joint" type="fixed">
+      <parent link="tray_${id}_link"/>
+      <child link="tray_${id}_base_link"/>
+      <origin xyz="0 0 -${translateZ/2 + 0.005}" rpy="0 0 0"/>
+    </joint>    
+    -->
+    <link name="tray_${id}_bar_1_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <cylinder length="${translateZ}" radius="${tray_bar_radius}" />
+	</geometry>  
+	<material name="White"/>
+      </visual>  
+    </link>  
+   
+    <gazebo reference="tray_${id}_bar_1_link">
+      <material>Gazebo/White</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="tray_${id}_bar_1_joint" type="fixed">
+      <parent link="tray_${id}_link"/>
+      <child link="tray_${id}_bar_1_link"/>
+      <origin xyz="0.03 ${base_radius - 0.03} -${translateZ/2 + 0.005}" rpy="0 0 0"/>
+    </joint>        
+
+    <link name="tray_${id}_bar_2_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <cylinder length="${translateZ}" radius="${tray_bar_radius}" />
+	</geometry>  
+	<material name="White"/>
+      </visual>  
+    </link>  
+   
+    <gazebo reference="tray_${id}_bar_2_link">
+      <material>Gazebo/White</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="tray_${id}_bar_2_joint" type="fixed">
+      <parent link="tray_${id}_link"/>
+      <child link="tray_${id}_bar_2_link"/>
+      <origin xyz="0.03 -${base_radius - 0.03} -${translateZ/2 + 0.005}" rpy="0 0 0"/>
+    </joint>      
+
+    <link name="tray_${id}_bar_3_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <cylinder length="${translateZ}" radius="${tray_bar_radius}" />
+	</geometry>  
+	<material name="White"/>
+      </visual>  
+    </link>  
+   
+    <gazebo reference="tray_${id}_bar_3_link">
+      <material>Gazebo/White</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="tray_${id}_bar_3_joint" type="fixed">
+      <parent link="tray_${id}_link"/>
+      <child link="tray_${id}_bar_3_link"/>
+      <origin xyz="-0.03 ${base_radius - 0.03} -${translateZ/2 + 0.005}" rpy="0 0 0"/>
+    </joint>        
+
+    <link name="tray_${id}_bar_4_link">
+      <visual>
+	<origin xyz="0 0 0" rpy="0 0 0" />
+	<geometry>
+	  <cylinder length="${translateZ}" radius="${tray_bar_radius}" />
+	</geometry>  
+	<material name="White"/>
+      </visual>  
+    </link>  
+   
+    <gazebo reference="tray_${id}_bar_4_link">
+      <material>Gazebo/White</material>
+      <turnGravityOff>false</turnGravityOff>
+    </gazebo>
+
+    <joint name="tray_${id}_bar_4_joint" type="fixed">
+      <parent link="tray_${id}_link"/>
+      <child link="tray_${id}_bar_4_link"/>
+      <origin xyz="-0.03 -${base_radius - 0.03} -${translateZ/2 + 0.005}" rpy="0 0 0"/>
+    </joint>      
+    
+  </macro>
+
+  <!--
+  ========== LINKS ===========
+  --> 
+  
+  <!-- BASE-FOOTPRINT -->
+  <!-- base_footprint is a fictitious link(frame) that is on the ground right below base_link origin -->
+  <link name="base_footprint">
+    <inertial>
+      <mass value="0.0001" />
+      <origin xyz="0 0 0" />
+      <inertia ixx="0.0001" ixy="0.0" ixz="0.0"
+          iyy="0.0001" iyz="0.0" 
+          izz="0.0001" />
+    </inertial>
+    <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+            <box size="0.001 0.001 0.001" />
+        </geometry>
+    </visual>
+  </link>
+  <gazebo reference="base_footprint">
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>  
+  
+  <!-- BASE-LINK -->
+  <!--Actual body/chassis of the robot-->  
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+	<cylinder length="${base_height}" radius="${base_radius}" />
+      </geometry>
+      <material name="Blue" />
+    </visual> 
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0 " />
+      <geometry>
+	<cylinder length="${base_height}" radius="${base_radius}" />
+      </geometry>
+    </collision>         
+    <inertial>
+      <mass value="${base_mass}" />
+      <origin xyz="0 0 0" />
+      <cylinder_inertia  m="${base_mass}" r="${base_radius}" h="${base_height}" />
+    </inertial>    
+  </link>
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>  
+  
+  <!-- TRANSMISSION WHEELS -->
+  <wheel fb="front" lr="right" parent="base_link" translateX="0" translateY="${base_radius + wheel_height/2}" translateZ="-${base_height/3}" flipY="1"/>
+  <wheel fb="front" lr="left" parent="base_link" translateX="0" translateY="-${base_radius + wheel_height/2}" translateZ="-${base_height/3}" flipY="1"/>  
+
+  <!-- CASTER WHEELS -->
+  <caster fb="front" parent="base_link" translateX="${base_radius - caster_radius}" translateY="0" translateZ="-${base_height/3 + caster_radius - 0.0003}" />
+  <caster fb="back" parent="base_link" translateX="-${base_radius - caster_radius}" translateY="0" translateZ="-${base_height/3 + caster_radius - 0.0003}" />
+  
+  <!-- TRAYS -->
+  <tray id="1" parent="base_link" translateZ="${base_height + tray_1_height}" />
+   
+  <tray id="2" parent="tray_1_link" translateZ="${base_height + tray_1_height}" /> 
+  
+
+  <!--
+  ========== JOINTS ===========
+  -->   
+  
+  <!-- BASE-FOOTPRINT >>> BASE-LINK -->
+  <joint name="base_footprint_joint" type="fixed">
+    <origin xyz="0 0 ${wheel_radius + base_height/2}" rpy="0 0 0" />
+    <parent link="base_footprint"/>
+    <child link="base_link" />
+  </joint>  
+  
+  <!--
+  ========== SENSORS/PLUGINS ===========
+  --> 
+  
+  <!-- CAMERA  -->
+  <link name="camera_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+	<box size="0.02 0.07 0.02"/>
+      </geometry>
+      <material name="Black" />
+    </visual>
+  </link>    
+  
+  <joint name="camera_joint" type="fixed">
+    <parent link="tray_2_link"/>
+    <child link="camera_link"/>
+    <origin xyz="${base_radius - 0.02} 0 0.005" rpy="0 0 0"/>
+  </joint>
+  
+  <gazebo reference="camera_link">
+    <material>Gazebo/Black</material>
+    <turnGravityOff>false</turnGravityOff>
+  </gazebo>    
+  
+  <!-- RPLIDAR A1M8 -->
+  <link name="rplidar_a1m8_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+	<cylinder length="${rplidar_a1m8_height}" radius="${rplidar_a1m8_radius}" />
+      </geometry>
+      <material name="Orange" />
+    </visual>
+  </link>
+  
+  <joint name="rplidar_a1m8_joint" type="fixed">
+    <origin xyz="0 0 ${(0.01 + rplidar_a1m8_height)/2}" rpy="0 0 0" />
+    <parent link="tray_2_link"/>
+    <child link="rplidar_a1m8_link" />
+  </joint>
+  
+  <gazebo reference="rplidar_a1m8_link">
+    <material>Gazebo/Orange</material>
+    <turnGravityOff>false</turnGravityOff>
+    <sensor type="ray" name="head_hokuyo_sensor">
+      <pose>${rplidar_a1m8_radius/2} 0 0 0 0 0</pose>
+      <visualize>false</visualize>
+      <!--
+      <update_rate>40</update_rate>
+      -->
+      <update_rate>5</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <!--
+            <samples>720</samples>
+            -->
+            <samples>360</samples>
+            <resolution>1</resolution>
+
+            <min_angle>-3.141592</min_angle>
+            <max_angle>3.141592</max_angle>
+
+            <!--
+            <min_angle>?1.570796</min_angle>
+            <max_angle>1.570796</max_angle>
+            -->
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.2</min>
+          <!--
+          <max>10.0</max>
+          -->
+          <max>8.0</max>
+          <!--
+          <resolution>0.001</resolution>
+          -->
+          <resolution>0.001</resolution>
+        </range>
+      </ray>
+      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_laser.so">
+        <topicName>/scan</topicName>
+        <frameName>rplidar_a1m8_link</frameName>
+      </plugin>
+    </sensor>
+  </gazebo>  
+  
+  <!-- DIFFERENCIAL DRIVE CONTROLLER  -->
+  <gazebo>
+    <plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+
+      <rosDebugLevel>Debug</rosDebugLevel>
+      <publishWheelTF>false</publishWheelTF>
+      <robotNamespace>/</robotNamespace>
+      <publishTf>1</publishTf>
+      <publishWheelJointState>false</publishWheelJointState>
+      <alwaysOn>true</alwaysOn>
+      <updateRate>100.0</updateRate>
+      <leftJoint>front_left_wheel_joint</leftJoint>
+      <rightJoint>front_right_wheel_joint</rightJoint>
+      <wheelSeparation>${2*base_radius}</wheelSeparation>
+      <wheelDiameter>${2*wheel_radius}</wheelDiameter>
+      <broadcastTF>1</broadcastTF>
+      <wheelTorque>30</wheelTorque>
+      <wheelAcceleration>1.8</wheelAcceleration>
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryFrame>odom</odometryFrame> 
+      <odometryTopic>odom</odometryTopic> 
+      <robotBaseFrame>base_footprint</robotBaseFrame>
+
+    </plugin>
+  </gazebo>   
+  
+</robot>
