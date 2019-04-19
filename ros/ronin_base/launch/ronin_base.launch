@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>  
+  <node pkg="ronin_base" type="ronin_base_controller.py" name="ronin_base_controller" output="screen">
+    <rosparam command="load" file="$(find ronin_base)/param/ronin_base.yaml" />
+  </node>
+</launch>  

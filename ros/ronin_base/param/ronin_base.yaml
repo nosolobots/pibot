@@ -1,0 +1,41 @@
+#------------------------------------------------
+# RONIN BASE params
+
+#------------------------------------------------
+# Geometry params
+
+# wheel radius (m)
+wheel_radius: 0.0325 
+
+# distance between wheels (m)
+wheel_distance: 0.19
+
+#------------------------------------------------
+# Kinematics
+
+# max linear velocity (m/s)
+max_linear_vel: 1.0
+
+# max angular velocity (rad/s)
+max_angular_vel: 1.25
+
+# motor encoder counts per revolution
+motor_cpr: 979.62       # Pololu 25D 6v 20.4:1 48CPR
+
+#------------------------------------------------
+# Sensors
+
+# camera
+use_cam: true
+
+#------------------------------------------------
+# ROS 
+
+# odometry publishing rate (Hz)
+odom_rate: 10.0
+
+# name of the base frame
+base_frame: base_footprint
+
+# name of the odometry frame
+odom_frame: odom
